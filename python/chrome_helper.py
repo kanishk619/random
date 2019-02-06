@@ -196,10 +196,12 @@ class Config(object):
 
     @base_dir.setter
     def base_dir(self, path: str = None):
-        if Utils.dir_exist(path):
+        if os.path.isdir(path):
             log('Using specified base directory [{}]'.format(path))
-            self._base_dir = path
-            self._config_path = Utils.join_dir(self.base_dir, "config.json")
+        else:
+            os.mkdir(path)
+        self._base_dir = path
+        self._config_path = Utils.join_dir(self.base_dir, "config.json")
 
     @property
     def extensions_path(self):
@@ -267,7 +269,7 @@ class Chrome(object):
         cmd_args.append('--user-data-dir="{}"'.format(self.config.base_dir + '/Sessions'))
         cmd_args.append('--profile-directory="{}"'.format(self.config.session_id))
         if self.proxy:
-            cmd_args.append('--proxy-server="{}"'.format("http://127.0.0.1:8080"))
+            cmd_args.append('--proxy-server="{}"'.format(self.proxy))
         # chrome needs comma separated list of extension paths
         exts_path = [",".join(e.path for e in Utils.selected_ext_to_obj(self.config.selected_extensions))]
         if exts_path[0] != '':
@@ -325,7 +327,6 @@ if args.extensions_path and Utils.dir_exist(args.extensions_path):
     log("Reload extensions from custom extension directory [{}]".format(args.extensions_path))
     config.extensions_path = args.extensions_path
     config.load_extensions(force_reload=True,  pattern='**/manifest.json')
-
 
 if args.refresh_extensions:
     log("Reloading extensions")
